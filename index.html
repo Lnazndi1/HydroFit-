@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HydroFit</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body { font-family: 'Cairo', sans-serif; margin:0; background:linear-gradient(to bottom,#021124,#0a95d1); color:#fff; }
+header { display:flex; justify-content:space-between; align-items:center; padding:10px 20px; background:#021124; }
+header h2 { margin:0; color:#fff; }
+header nav a { color:white; text-decoration:none; margin-left:20px; font-weight:600; cursor:pointer; }
+header nav a:hover { color:#0a95d1; }
+button { background:#0a95d1; color:white; border:none; border-radius:8px; padding:10px 16px; font-size:16px; cursor:pointer; transition:all 0.3s ease; }
+button:hover { background:#0782b8; }
+button:active { background:#05668d; }
+.container { max-width:900px; margin:20px auto; padding:20px; background:rgba(255,255,255,0.05); border-radius:12px; }
+.page { display:none; }
+.page.active { display:block; }
+
+/* إدخال البيانات */
+.input-box { margin:10px 0; }
+.input-box label { display:block; margin-bottom:5px; font-weight:bold; }
+.input-box input, .input-box select { width:100%; padding:8px; border-radius:6px; border:1px solid #ccc; }
+
+/* كوب الماء */
+.cup-wrap { position: relative; width:140px; height:320px; border:3px solid #fff; border-radius:12px; overflow:hidden; background:white; }
+.cup-water { position:absolute; bottom:0; width:100%; height:0%; background:#0a95d1; transition:height 0.5s ease; }
+.cup-water::before { content:""; position:absolute; top:-20px; left:0; width:200%; height:40px; background:rgba(255,255,255,0.4); border-radius:50%; animation:wave 3s infinite linear; }
+@keyframes wave { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+.cup-percent { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:26px; font-weight:bold; color:#00345c; pointer-events:none; }
+
+/* آراء المستخدمين */
+.review-box { max-width:400px; margin:20px auto; background:#fff; color:#000; padding:12px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.2); direction:rtl; }
+.review-box textarea { width:100%; padding:8px; border-radius:8px; border:1px solid #ccc; resize:none; }
+.stars { margin:8px 0; font-size:24px; cursor:pointer; color:#ccc; display:flex; gap:4px; justify-content:flex-start; }
+.stars span:hover, .stars span.selected { color:gold; }
+
+.data-box div { margin:8px 0; font-weight:bold; }
+</style>
+</head>
+<body>
+
+<header>
+<h2>HydroFit</h2>
+<nav>
+  <a data-page="inputPage">ابدأ التحليل</a>
+  <a data-page="homePage">الرئيسية</a>
+  <a data-page="analysisPage">تحليل الماء</a>
+  <a data-page="reviewsPage">آراء المستخدمين</a>
+  <a data-page="aboutPage">من نحن</a>
+  <a id="langBtn">EN/AR</a>
+</nav>
+</header>
+
+<!-- صفحة إدخال البيانات -->
+<div class="page active" id="inputPage">
+<div class="container">
+<h2 data-ar="أدخل بياناتك" data-en="Enter Your Info">أدخل بياناتك</h2>
+<div class="input-box">
+<label data-ar="الوزن (كجم)" data-en="Weight (kg)">الوزن (كجم)</label>
+<input type="number" id="weight">
+</div>
+<div class="input-box">
+<label data-ar="الطول (سم)" data-en="Height (cm)">الطول (سم)</label>
+<input type="number" id="height">
+</div>
+<div class="input-box">
+<label data-ar="العمر" data-en="Age">العمر</label>
+<input type="number" id="age">
+</div>
+<div class="input-box">
+<label data-ar="مستوى الرياضة" data-en="Exercise Level">مستوى الرياضة</label>
+<select id="exercise">
+<option value="light" data-ar="خفيف" data-en="Light">خفيف</option>
+<option value="medium" data-ar="متوسط" data-en="Medium">متوسط</option>
+<option value="high" data-ar="شديد" data-en="High">شديد</option>
+</select>
+</div>
+<button id="startAnalysis" data-ar="ابدأ التحليل" data-en="Start Analysis">ابدأ التحليل</button>
+<div id="dailyGoalText" style="margin-top:10px;font-weight:bold;"></div>
+</div>
+</div>
+<!-- صفحة الرئيسية -->
+<div class="page" id="homePage">
+  <div class="container">
+    <h2 data-ar="مرحباً بك" data-en="Welcome">مرحباً بك</h2>
+    <div class="data-box">
+      <div><b data-ar="الوزن:" data-en="Weight:"></b> <span id="displayWeight">--</span> kg</div>
+      <div><b data-ar="الطول:" data-en="Height:"></b> <span id="displayHeight">--</span> cm</div>
+      <div><b data-ar="العمر:" data-en="Age:"></b> <span id="displayAge">--</span></div>
+      <div><b data-ar="مستوى الرياضة:" data-en="Exercise Level:"></b> <span id="displayExercise">--</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- صفحة التحليل -->
+<div class="page" id="analysisPage">
+  <div class="container">
+    <h2 data-ar="تحليل الماء اليوم" data-en="Daily Water Analysis">تحليل الماء اليوم</h2>
+    <div style="display:flex;justify-content:space-between;margin-top:20px">
+      <div class="cup-wrap">
+        <div class="cup-water" id="cupWater"></div>
+        <div class="cup-percent" id="cupPercent">0%</div>
+      </div>
+      <div class="data-box">
+        <div data-ar="هدف اليوم:" data-en="Daily Goal:">هدف اليوم: <span id="dailyGoalDisplay">0 L</span></div>
+        <div data-ar="شربت:" data-en="Drank:">شربت: <span id="currentIntake">0</span> L</div>
+        <div data-ar="كمية الماء بالزجاجة:" data-en="Bottle Level:">كمية الماء بالزجاجة: <span id="bottleLevel">2000</span> ml</div>
+        <div data-ar="TDS:" data-en="TDS:">TDS: <span id="tdsValue">---</span> ppm</div>
+        <div data-ar="درجة الحرارة:" data-en="Temperature:">درجة الحرارة: <span id="tempValue">--</span> °C</div>
+      </div>
+    </div>
+    <div style="margin-top:15px">
+      <button id="drinkSmall" data-ar="اشرب كوب صغير (100ml)" data-en="Drink Small (100ml)">اشرب كوب صغير (100ml)</button>
+      <button id="drinkLarge" data-ar="اشرب كوب كبير (250ml)" data-en="Drink Large (250ml)">اشرب كوب كبير (250ml)</button>
+      <button id="reset" data-ar="إعادة ضبط" data-en="Reset">إعادة ضبط</button>
+    </div>
+  </div>
+</div>
+
+<!-- صفحة الآراء -->
+<div class="page" id="reviewsPage">
+  <div class="container">
+    <h2 data-ar="آراء المستخدمين" data-en="User Reviews">آراء المستخدمين</h2>
+    <div class="review-box">
+      <div id="reviewUser">اسم المستخدم: زائر</div>
+      <textarea id="reviewText" rows="3" placeholder="اكتب رأيك هنا..." data-ar="اكتب رأيك هنا..." data-en="Write your review here...">اكتب رأيك هنا...</textarea>
+      <div class="stars" id="stars">
+        <span data-value="1">★</span>
+        <span data-value="2">★</span>
+        <span data-value="3">★</span>
+        <span data-value="4">★</span>
+        <span data-value="5">★</span>
+      </div>
+      <button onclick="submitReview()" data-ar="إرسال" data-en="Submit">إرسال</button>
+    </div>
+    <div id="reviewsList"></div>
+  </div>
+</div>
+
+<!-- صفحة من نحن -->
+<div class="page" id="aboutPage">
+  <div class="container">
+    <h2 data-ar="من نحن" data-en="About Us">من نحن</h2>
+    <p data-ar="نحن فريق..." data-en="We are a team..."></p>
+    نحن فريق يهدف إلى تحسين نمط الحياة الصحي من خلال تقنيات ذكية ومبتكرة. الزجاجة الذكية التي نقدمها ليست مجرد وعاء للماء، بل هي رفيق يومي يراقب استهلاكك للماء ويحفزك على شرب الكمية المناسبة لجسمك.
+
+من خلال مستشعرات دقيقة وواجهة سهلة الاستخدام، يمكن للمستخدم معرفة: كمية الماء التي شربها، درجة حرارته، ونقاء الماء (TDS). كما تساعد الزجاجة على تحديد أهداف شخصية استنادًا إلى الوزن، العمر، ومستوى النشاط اليومي، مما يجعلها أداة مثالية للحفاظ على الصحة وتعزيز الأداء البدني.
+
+نؤمن بأن الماء هو أساس الصحة، والذكاء الاصطناعي والابتكار يمكن أن يجعل الحفاظ على الجسم رطبًا سهلًا وممتعًا. لذلك، نلتزم بتقديم منتج مبتكر، عملي، وموثوق به لكل من يسعى لنمط حياة صحي ومستدام.
+    </p>
+  </div>
+</div>
+
+<script>
+// التنقل بين الصفحة الرئيسية والصفحة الثانية
+document.getElementById("langBtn").onclick = () => {
+  const currentPage = window.location.pathname.split("/").pop();
+  
+  if (currentPage === "index.html" || currentPage === "") {
+    window.location.href = "hyyyy.html"; // ✨ يروح للصفحة الثانية
+  } else {
+    window.location.href = "index.html"; // ✨ يرجع للصفحة الأساسية
+  }
+};
+  
+  // تنقل بين الصفحات
+  document.querySelectorAll("nav a[data-page]").forEach(link => {
+    link.addEventListener("click", e => {
+      e.preventDefault();
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      document.getElementById(link.dataset.page).classList.add("active");
+    });
+  });
+  
+  // تخزين البيانات وحساب هدف اليوم ≤ 2 لتر
+  let STATE = { dailyGoal: 0, intake: 0, bottle: 2000, tds: 200, temp: 22 };
+  document.getElementById("startAnalysis").onclick = () => {
+      const w = Number(document.getElementById("weight").value);
+      const h = Number(document.getElementById("height").value);
+      const a = Number(document.getElementById("age").value);
+      const ex = document.getElementById("exercise").value;
+      if (!w || !h || !a) {
+  alert("اكمل كل البيانات");
+  return;
+}
+      
+      STATE.dailyGoal = Math.min(Math.round((w * 0.035 * (ex === "medium" ? 1.1 : ex === "high" ? 1.25 : 1)) * 100) / 100, 2);
+      STATE.intake = 0;
+      STATE.bottle = 2000;
+      STATE.tds = 200;
+      STATE.temp = 22;
+      document.getElementById("dailyGoalText").textContent="هدفك اليوم: "+STATE.dailyGoal+" L";
+  document.getElementById("dailyGoalDisplay").textContent=STATE.dailyGoal+" L";
+  document.getElementById("currentIntake").textContent=STATE.intake.toFixed(2);
+  document.getElementById("cupPercent").textContent="0%";
+  document.getElementById("cupWater").style.height="0%";
+  document.getElementById("bottleLevel").textContent=STATE.bottle;
+  document.getElementById("tdsValue").textContent=STATE.tds;
+  document.getElementById("tempValue").textContent=STATE.temp;
+
+  document.getElementById("displayWeight").textContent=w;
+  document.getElementById("displayHeight").textContent=h;
+  document.getElementById("displayAge").textContent=a;
+  document.getElementById("displayExercise").textContent=document.getElementById("exercise").selectedOptions[0].text;
+
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById("analysisPage").classList.add("active");
+};
+
+// تحديث كوب الماء
+function renderCup(){
+  const percent=Math.min((STATE.intake/STATE.dailyGoal)*100,100);
+  document.getElementById("cupPercent").textContent=Math.floor(percent)+"%";
+  document.getElementById("cupWater").style.height=percent+"%";
+  document.getElementById("currentIntake").textContent=STATE.intake.toFixed(2);
+  document.getElementById("bottleLevel").textContent=STATE.bottle;
+  document.getElementById("tdsValue").textContent=STATE.tds;
+  document.getElementById("tempValue").textContent=STATE.temp;
+}
+
+document.getElementById("drinkSmall").onclick=()=>{
+  if(STATE.bottle>=100){
+    STATE.intake+=0.1;
+    STATE.bottle-=100;
+    renderCup();
+  }
+};
+document.getElementById("drinkLarge").onclick=()=>{
+  if(STATE.bottle>=250){
+    STATE.intake+=0.25;
+    STATE.bottle-=250;
+    renderCup();
+  }
+};
+document.getElementById("reset").onclick=()=>{
+  STATE.intake=0;
+  STATE.bottle=2000;
+  renderCup();
+};
+
+// تحديث الحرارة وTDS كل ثانيتين
+setInterval(()=>{
+  STATE.temp=Math.round((STATE.temp + (Math.random()-0.5)*0.2)*10)/10;
+  STATE.tds=Math.round(150+Math.random()*150);
+  renderCup();
+},2000);
+
+// آراء المستخدمين
+const currentUser="زائر";
+document.getElementById("reviewUser").textContent="اسم المستخدم: "+currentUser;
+const stars=document.querySelectorAll("#stars span");
+let currentRating=0;
+stars.forEach(star=>{
+  star.addEventListener("mouseover",()=>highlightStars(parseInt(star.dataset.value)));
+  star.addEventListener("mouseout",()=>highlightStars(currentRating));
+  star.addEventListener("click",()=>{currentRating=parseInt(star.dataset.value); highlightStars(currentRating);});
+});
+function highlightStars(rating){ stars.forEach(star=>{ star.style.color=parseInt(star.dataset.value)<=rating?"gold":"#ccc"; }); }
+function submitReview(){
+  const text=document.getElementById("reviewText").value.trim();
+  if(!text||currentRating===0) return alert("اكتب رأيك واختر التقييم");
+  const reviews=JSON.parse(localStorage.getItem("reviews")||"[]");
+  reviews.push({user:currentUser,text,rating:currentRating});
+  localStorage.setItem("reviews",JSON.stringify(reviews));
+  document.getElementById("reviewText").value="";
+  currentRating=0; highlightStars(currentRating);
+  loadReviews();
+}
+function loadReviews(){
+  const reviews=JSON.parse(localStorage.getItem("reviews")||"[]");
+  const container=document.getElementById("reviewsList");
+  container.innerHTML="";
+  reviews.reverse().forEach(r=>{
+    const div=document.createElement("div");
+    div.style.background="#eee";
+    div.style.padding="8px";
+    div.style.marginBottom="8px";
+    div.style.borderRadius="8px";
+    div.style.textAlign="right";
+    div.innerHTML = `<b>${r.user}</b> - <span style="color:gold;">${'★'.repeat(r.rating)}</span><br>${r.text}`;
+    container.appendChild(div);
+  });
+}
+loadReviews();
+</script>
+
+</body>
+</html>
